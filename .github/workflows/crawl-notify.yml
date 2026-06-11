@@ -1,0 +1,74 @@
+name: 🤖 DART Crawling & Notifications
+
+on:
+  # 30분마다 자동 실행
+  schedule:
+    - cron: '*/30 * * * *'
+
+  # 수동 실행 (GitHub Actions 탭에서 "Run workflow" 클릭)
+  workflow_dispatch:
+
+jobs:
+  crawl-and-notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+
+      - name: 🔍 Run DART crawling
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          python scripts/crawl_dart.py
+
+      - name: 📬 Send notifications
+        env:
+          USER_1_EMAIL: ${{ secrets.USER_1_EMAIL }}
+          USER_1_PHONE: ${{ secrets.USER_1_PHONE }}
+          USER_2_EMAIL: ${{ secrets.USER_2_EMAIL }}
+          USER_2_PHONE: ${{ secrets.USER_2_PHONE }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+        run: |
+          python scripts/send_notifications.py
+
+      - name: 📤 Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add data/trades.json
+            LATEST_TRADE=$(python -c "
+import json
+with open('data/trades.json') as f:
+    data = json.load(f)
+    if data['trades']:
+        t = data['trades'][-1]
+        print(f\"New trade: {t['symbol']} {t['trade_type']} {t['quantity']}\")
+")
+            git commit -m "🔄 Update trades: $LATEST_TRADE [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: 📊 Log execution
+        if: always()
+        run: |
+          echo "✅ Workflow execution completed at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow: ${{ github.workflow }}"

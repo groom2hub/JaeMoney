@@ -24,12 +24,36 @@ export default function Dashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [tradesRes, statsRes] = await Promise.all([
-          tradesAPI.getList(0, 10),
-          tradesAPI.getSummary(),
-        ]);
-        setTrades(tradesRes.data);
-        setStats(statsRes.data);
+        // ⭐ GitHub에서 JSON 다운로드
+        const gitHubData = await tradesAPI.fetchFromGitHub();
+        const tradesToDisplay = gitHubData.trades || [];
+        setTrades(tradesToDisplay);
+
+        // 통계 계산
+        const buyTrades = tradesToDisplay.filter(
+          (t) => t.trade_type === 'BUY'
+        );
+        const sellTrades = tradesToDisplay.filter(
+          (t) => t.trade_type === 'SELL'
+        );
+
+        const calculatedStats = {
+          total_buy_amount: buyTrades.reduce(
+            (sum, t) => sum + (t.total_amount || 0),
+            0
+          ),
+          total_sell_amount: sellTrades.reduce(
+            (sum, t) => sum + (t.total_amount || 0),
+            0
+          ),
+          total_trades: tradesToDisplay.length,
+          buy_count: buyTrades.length,
+          sell_count: sellTrades.length,
+          net_amount: buyTrades.reduce((sum, t) => sum + (t.total_amount || 0), 0) -
+            sellTrades.reduce((sum, t) => sum + (t.total_amount || 0), 0),
+        };
+
+        setStats(calculatedStats);
       } catch (error) {
         console.error('데이터 로드 실패:', error);
       } finally {

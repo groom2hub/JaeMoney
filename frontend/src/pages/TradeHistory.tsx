@@ -13,8 +13,30 @@ export default function TradeHistory() {
     const fetchTrades = async () => {
       setLoading(true);
       try {
-        const res = await tradesAPI.getList(0, 100, filters);
-        setTrades(res.data);
+        // ⭐ GitHub에서 JSON 다운로드
+        const gitHubData = await tradesAPI.fetchFromGitHub();
+        let tradesToDisplay = gitHubData.trades || [];
+
+        // 필터 적용
+        if (filters.symbol) {
+          tradesToDisplay = tradesToDisplay.filter((t) =>
+            t.symbol.toLowerCase().includes(filters.symbol.toLowerCase())
+          );
+        }
+        if (filters.trade_type) {
+          tradesToDisplay = tradesToDisplay.filter(
+            (t) => t.trade_type === filters.trade_type
+          );
+        }
+
+        // 최신순 정렬
+        tradesToDisplay.sort(
+          (a, b) =>
+            new Date(b.trade_date).getTime() -
+            new Date(a.trade_date).getTime()
+        );
+
+        setTrades(tradesToDisplay);
       } catch (error) {
         console.error('거래 정보 로드 실패:', error);
       } finally {

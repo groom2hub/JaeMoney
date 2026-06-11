@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/groom2hub/JaeMoney/main/data/trades.json';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -44,7 +45,20 @@ export const authAPI = {
 };
 
 // Stock Trade API
+// ⭐ GitHub에서 trades.json 다운로드 (로컬 서버 필요 없음)
 export const tradesAPI = {
+  // GitHub Raw URL에서 JSON 다운로드
+  fetchFromGitHub: async () => {
+    try {
+      const response = await axios.get(GITHUB_RAW_URL);
+      return response.data;
+    } catch (error) {
+      console.error('GitHub에서 JSON 다운로드 실패:', error);
+      return { trades: [], last_updated: null, update_count: 0 };
+    }
+  },
+
+  // 로컬 서버가 켜있을 때는 API 사용 (선택사항)
   getList: (skip = 0, limit = 10, filters?: any) =>
     api.get('/trades', { params: { skip, limit, ...filters } }),
   getById: (id: number) => api.get(`/trades/${id}`),
