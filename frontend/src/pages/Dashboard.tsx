@@ -29,29 +29,28 @@ export default function Dashboard() {
         const tradesToDisplay = gitHubData.trades || [];
         setTrades(tradesToDisplay);
 
-        // 통계 계산
-        const buyTrades = tradesToDisplay.filter(
-          (t) => t.trade_type === 'BUY'
+        // 통계 계산 (1회 순회)
+        const calculatedStats = tradesToDisplay.reduce(
+          (stats, t) => {
+            const amount = t.total_amount || 0;
+            return {
+              total_buy_amount: t.trade_type === 'BUY' ? stats.total_buy_amount + amount : stats.total_buy_amount,
+              total_sell_amount: t.trade_type === 'SELL' ? stats.total_sell_amount + amount : stats.total_sell_amount,
+              total_trades: stats.total_trades + 1,
+              buy_count: t.trade_type === 'BUY' ? stats.buy_count + 1 : stats.buy_count,
+              sell_count: t.trade_type === 'SELL' ? stats.sell_count + 1 : stats.sell_count,
+              net_amount: t.trade_type === 'BUY' ? stats.net_amount - amount : stats.net_amount + amount,
+            };
+          },
+          {
+            total_buy_amount: 0,
+            total_sell_amount: 0,
+            total_trades: 0,
+            buy_count: 0,
+            sell_count: 0,
+            net_amount: 0,
+          }
         );
-        const sellTrades = tradesToDisplay.filter(
-          (t) => t.trade_type === 'SELL'
-        );
-
-        const calculatedStats = {
-          total_buy_amount: buyTrades.reduce(
-            (sum, t) => sum + (t.total_amount || 0),
-            0
-          ),
-          total_sell_amount: sellTrades.reduce(
-            (sum, t) => sum + (t.total_amount || 0),
-            0
-          ),
-          total_trades: tradesToDisplay.length,
-          buy_count: buyTrades.length,
-          sell_count: sellTrades.length,
-          net_amount: buyTrades.reduce((sum, t) => sum + (t.total_amount || 0), 0) -
-            sellTrades.reduce((sum, t) => sum + (t.total_amount || 0), 0),
-        };
 
         setStats(calculatedStats);
       } catch (error) {

@@ -53,8 +53,13 @@ export const tradesAPI = {
       const response = await axios.get(GITHUB_RAW_URL);
       return response.data;
     } catch (error) {
-      console.error('GitHub에서 JSON 다운로드 실패:', error);
-      return { trades: [], last_updated: null, update_count: 0 };
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ GitHub에서 JSON 다운로드 실패:', {
+        url: GITHUB_RAW_URL,
+        error: errorMsg,
+        timestamp: new Date().toISOString(),
+      });
+      return { trades: [], last_updated: null, update_count: 0, _error: errorMsg };
     }
   },
 

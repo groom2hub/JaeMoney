@@ -29,12 +29,16 @@ export default function TradeHistory() {
           );
         }
 
-        // 최신순 정렬
-        tradesToDisplay.sort(
-          (a, b) =>
-            new Date(b.trade_date).getTime() -
-            new Date(a.trade_date).getTime()
-        );
+        // 최신순 정렬 (날짜 유효성 검사)
+        tradesToDisplay.sort((a, b) => {
+          const dateA = new Date(a.trade_date).getTime();
+          const dateB = new Date(b.trade_date).getTime();
+          if (isNaN(dateA) || isNaN(dateB)) {
+            console.warn('Invalid trade date:', { a: a.trade_date, b: b.trade_date });
+            return 0;
+          }
+          return dateB - dateA;
+        });
 
         setTrades(tradesToDisplay);
       } catch (error) {

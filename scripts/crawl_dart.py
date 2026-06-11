@@ -71,15 +71,32 @@ class DARTCrawler:
 
     def parse_trade(self, dart_data: dict) -> dict:
         """DART 데이터를 trades.json 형식으로 변환"""
+        # 필드 검증
+        required_fields = ['symbol', 'corp_name', 'type', 'quantity', 'price', 'trade_date']
+        for field in required_fields:
+            if field not in dart_data or dart_data[field] is None:
+                raise ValueError(f"필수 필드 누락: {field}")
+
+        # trade_type 검증
+        trade_type = dart_data.get("type", "").upper().strip()
+        if trade_type not in ['BUY', 'SELL']:
+            raise ValueError(f"잘못된 거래 유형: {trade_type} (BUY 또는 SELL만 가능)")
+
+        # 수량/가격 변환
+        try:
+            quantity = int(float(dart_data.get("quantity")))
+            price = float(dart_data.get("price"))
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"수량/가격 변환 실패: {str(e)}")
+
         return {
-            "id": len(self.load_existing_trades()["trades"]) + 1,
-            "symbol": dart_data.get("symbol", ""),
-            "company_name": dart_data.get("corp_name", ""),
-            "trade_type": dart_data.get("type", "").upper(),  # BUY or SELL
-            "quantity": int(dart_data.get("quantity", 0)),
-            "price": float(dart_data.get("price", 0)),
-            "total_amount": int(dart_data.get("quantity", 0)) * float(dart_data.get("price", 0)),
-            "trade_date": dart_data.get("trade_date", ""),
+            "symbol": dart_data.get("symbol", "").strip(),
+            "company_name": dart_data.get("corp_name", "").strip(),
+            "trade_type": trade_type,
+            "quantity": quantity,
+            "price": price,
+            "total_amount": quantity * price,
+            "trade_date": dart_data.get("trade_date", "").strip(),
             "disclosure_source": "DART",
             "discovered_at": datetime.utcnow().isoformat() + "Z"
         }
@@ -94,20 +111,24 @@ class DARTCrawler:
         return False
 
     def update_trades(self, new_trades: list) -> int:
-        """trades.json 업데이트"""
+        """trades.json 업데이트 (한 번만 파일 로드)"""
         data = self.load_existing_trades()
         added_count = 0
 
         for dart_trade in new_trades:
-            parsed_trade = self.parse_trade(dart_trade)
+            try:
+                parsed_trade = self.parse_trade(dart_trade)
 
-            if not self.is_duplicate(parsed_trade, data["trades"]):
-                parsed_trade["id"] = len(data["trades"]) + 1
-                data["trades"].append(parsed_trade)
-                added_count += 1
-                print(f"✅ 새 거래 추가: {parsed_trade['company_name']} {parsed_trade['trade_type']}")
-            else:
-                print(f"⏭️  중복 거래 스킵: {parsed_trade['company_name']}")
+                if not self.is_duplicate(parsed_trade, data["trades"]):
+                    parsed_trade["id"] = len(data["trades"]) + 1
+                    data["trades"].append(parsed_trade)
+                    added_count += 1
+                    print(f"✅ 새 거래 추가: {parsed_trade['company_name']} {parsed_trade['trade_type']}")
+                else:
+                    print(f"⏭️  중복 거래 스킵: {parsed_trade['company_name']}")
+            except ValueError as e:
+                print(f"❌ 거래 파싱 실패: {str(e)}")
+                continue
 
         if added_count > 0:
             data["last_updated"] = datetime.utcnow().isoformat() + "Z"

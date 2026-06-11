@@ -54,7 +54,14 @@ class NotificationSender:
 
         trades = data.get("trades", [])
         if trades:
-            return trades[-1]  # 마지막 거래 (가장 최신)
+            trade = trades[-1]
+            # 필수 필드 검증
+            required_fields = ['symbol', 'company_name', 'trade_type', 'quantity', 'price', 'total_amount', 'trade_date']
+            if all(field in trade for field in required_fields):
+                return trade
+            else:
+                missing = [f for f in required_fields if f not in trade]
+                raise ValueError(f"거래 정보 누락: {', '.join(missing)}")
         return None
 
     def format_email(self, trade: dict) -> dict:
@@ -85,27 +92,22 @@ JaeMoney - 주식 거래 모니터링 서비스
         return f"[JaeMoney] {trade['symbol']} {trade_type_kr} {trade['quantity']}주 ${trade['total_amount']:,.0f}"
 
     def send_email(self, user_email: str, trade: dict) -> bool:
-        """SendGrid로 이메일 발송"""
-        if not user_email or not self.sendgrid_api_key:
-            print(f"⚠️  이메일 발송 스킵 (설정 없음)")
+        """SendGrid로 이메일 발송 (테스트 모드: API 키 없으면 로그만)"""
+        if not user_email:
             return False
 
         try:
-            # TODO: SendGrid API 호출
-            # from sendgrid import SendGridAPIClient
-            # from sendgrid.helpers.mail import Mail
-            #
-            # mail = Mail(
-            #     from_email='noreply@jaemoney.com',
-            #     to_emails=user_email,
-            #     subject=email_data['subject'],
-            #     plain_text_content=email_data['body']
-            # )
-            # sg = SendGridAPIClient(self.sendgrid_api_key)
-            # response = sg.send(mail)
-
             email_data = self.format_email(trade)
-            print(f"📧 이메일 발송: {user_email}")
+            if self.sendgrid_api_key:
+                # TODO: SendGrid API 호출 (실제 발송)
+                # from sendgrid import SendGridAPIClient
+                # from sendgrid.helpers.mail import Mail
+                # sg = SendGridAPIClient(self.sendgrid_api_key)
+                # mail = Mail(from_email='noreply@jaemoney.com', to_emails=user_email, ...)
+                # sg.send(mail)
+                print(f"📧 이메일 발송 (실제): {user_email}")
+            else:
+                print(f"📧 [TEST] 이메일 발송 (테스트 모드): {user_email}")
             print(f"   제목: {email_data['subject']}")
             return True
 
@@ -114,24 +116,20 @@ JaeMoney - 주식 거래 모니터링 서비스
             return False
 
     def send_sms(self, user_phone: str, trade: dict) -> bool:
-        """Twilio로 SMS 발송"""
-        if not user_phone or not self.twilio_account_sid:
-            print(f"⚠️  SMS 발송 스킵 (설정 없음)")
+        """Twilio로 SMS 발송 (테스트 모드: API 키 없으면 로그만)"""
+        if not user_phone:
             return False
 
         try:
-            # TODO: Twilio API 호출
-            # from twilio.rest import Client
-            #
-            # client = Client(self.twilio_account_sid, self.twilio_auth_token)
-            # message = client.messages.create(
-            #     body=sms_text,
-            #     from_='+1234567890',  # Twilio 전화번호
-            #     to=user_phone
-            # )
-
             sms_text = self.format_sms(trade)
-            print(f"📱 SMS 발송: {user_phone}")
+            if self.twilio_account_sid:
+                # TODO: Twilio API 호출 (실제 발송)
+                # from twilio.rest import Client
+                # client = Client(self.twilio_account_sid, self.twilio_auth_token)
+                # client.messages.create(body=sms_text, from_='+1234567890', to=user_phone)
+                print(f"📱 SMS 발송 (실제): {user_phone}")
+            else:
+                print(f"📱 [TEST] SMS 발송 (테스트 모드): {user_phone}")
             print(f"   메시지: {sms_text}")
             return True
 

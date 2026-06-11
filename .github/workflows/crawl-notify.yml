@@ -31,7 +31,7 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: |
-          python scripts/crawl_dart.py
+          python scripts/crawl_dart.py || exit 1
 
       - name: 📬 Send notifications
         env:
@@ -43,7 +43,7 @@ jobs:
           TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
         run: |
-          python scripts/send_notifications.py
+          python scripts/send_notifications.py || exit 1
 
       - name: 📤 Commit and push changes
         run: |
