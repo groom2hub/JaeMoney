@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import auth
+from routes import auth, trades, subscriptions
 
 app = FastAPI(
     title="JaeMoney API",
@@ -19,6 +19,8 @@ app.add_middleware(
 
 # 라우트 등록
 app.include_router(auth.router)
+app.include_router(trades.router)
+app.include_router(subscriptions.router)
 
 @app.get("/")
 async def root():
