@@ -52,15 +52,7 @@ jobs:
 
           if [ -n "$(git status --porcelain)" ]; then
             git add data/trades.json
-            LATEST_TRADE=$(python -c "
-import json
-with open('data/trades.json') as f:
-    data = json.load(f)
-    if data['trades']:
-        t = data['trades'][-1]
-        print(f\"New trade: {t['symbol']} {t['trade_type']} {t['quantity']}\")
-")
-            git commit -m "🔄 Update trades: $LATEST_TRADE [skip ci]"
+            git commit -m "🔄 Update trades: DART crawling result [skip ci]"
             git push
           else
             echo "No changes to commit"
