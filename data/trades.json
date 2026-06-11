@@ -1,5 +1,30 @@
 {
-  "last_updated": null,
-  "update_count": 0,
-  "trades": []
+  "last_updated": "2024-06-11T10:30:00Z",
+  "update_count": 2,
+  "trades": [
+    {
+      "id": 1,
+      "symbol": "AAPL",
+      "company_name": "Apple Inc.",
+      "trade_type": "BUY",
+      "quantity": 100,
+      "price": 150.5,
+      "total_amount": 15050,
+      "trade_date": "2024-06-11T09:00:00Z",
+      "disclosure_source": "DART",
+      "discovered_at": "2024-06-11T09:05:00Z"
+    },
+    {
+      "id": 2,
+      "symbol": "MSFT",
+      "company_name": "Microsoft Corp.",
+      "trade_type": "SELL",
+      "quantity": 50,
+      "price": 380.2,
+      "total_amount": 19010,
+      "trade_date": "2024-06-11T10:30:00Z",
+      "disclosure_source": "DART",
+      "discovered_at": "2024-06-11T10:35:00Z"
+    }
+  ]
 }
